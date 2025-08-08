@@ -35,7 +35,7 @@ function PlayerAvatar({ name = "Guest" }) {
   const hair = `hsl(${(hue + 300) % 360} 25% 20%)`;
 
   return (
-    <svg viewBox="0 0 220 220" className="w-full h-full drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)]">
+    <svg viewBox="0 0 220 220" className="w-full h-full drop-shadow-[0_12px_32px_rgba(0,0,0,0.6)]">
       <defs>
         <radialGradient id="glow" cx="60%" cy="42%" r="60%">
           <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.35" />
@@ -45,15 +45,30 @@ function PlayerAvatar({ name = "Guest" }) {
           <feDropShadow dx="0" dy="4" stdDeviation="4" floodOpacity="0.35" />
         </filter>
       </defs>
+
+      {/* background glow + desk edge */}
       <rect x="0" y="0" width="220" height="220" fill="url(#glow)" />
       <rect x="0" y="170" width="220" height="18" fill="#cbd5e1" />
+
+      {/* dual screens */}
       <g filter="url(#shadow)">
+        {/* Main monitor */}
         <rect x="120" y="76" width="78" height="52" rx="7" fill="#1f2937" />
-        <rect x="125" y="81" width="68" height="42" rx="5" className="fill-slate-900 animate-pulse" />
+        <rect x="125" y="81" width="68" height="42" rx="5" className="fill-slate-900" />
+        {/* --- label on main monitor --- */}
+        <text x="159" y="107" textAnchor="middle" fontFamily="ui-sans-serif, system-ui" fontSize="8" fill="#38bdf8" opacity="0.9" letterSpacing="1.5">
+          TRADER.IO
+        </text>
+
+        {/* Side screen */}
         <rect x="38" y="84" width="70" height="44" rx="6" fill="#111827" />
-        <rect x="42" y="88" width="62" height="36" rx="4" className="fill-slate-900 animate-pulse" />
+        <rect x="42" y="88" width="62" height="36" rx="4" className="fill-slate-900" />
       </g>
+
+      {/* chair back */}
       <rect x="25" y="112" width="18" height="48" rx="4" fill={chair} />
+
+      {/* head + hair */}
       <path d="M66 56 q18 -18 36 0 v10 h-36 z" fill={hair} />
       <circle cx="84" cy="68" r="20" fill="#fcd34d" />
       <g>
@@ -61,6 +76,8 @@ function PlayerAvatar({ name = "Guest" }) {
         <rect x="92" y="66" width="6" height="2" className="fill-slate-900 animate-[blink_4s_infinite_0.2s]" />
       </g>
       <path d="M78 77 q6 5 12 0" stroke="#7c2d12" strokeWidth="2" fill="none" />
+
+      {/* torso + arms */}
       <rect x="64" y="88" width="40" height="46" rx="10" fill={shirt} />
       <g className="origin-[84px_122px] animate-[tap_0.6s_ease-in-out_infinite]">
         <rect x="56" y="112" width="28" height="10" rx="5" fill="#fcd34d" />
@@ -68,6 +85,8 @@ function PlayerAvatar({ name = "Guest" }) {
       <g className="origin-[98px_122px] animate-[tap2_0.6s_ease-in-out_infinite]">
         <rect x="84" y="112" width="28" height="10" rx="5" fill="#fcd34d" />
       </g>
+
+      {/* keyboard + coffee */}
       <rect x="102" y="156" width="60" height="10" rx="4" fill="#94a3b8" />
       <g>
         <rect x="168" y="156" width="14" height="10" rx="2" fill="#e5e7eb" />
@@ -458,24 +477,38 @@ export default function CryptoTycoon() {
   }
 
   if (stage === "desk") {
+    // Make the avatar fill most of the browser: square container sized by the smaller viewport side
+    // Percentage overlay for the monitor click zone is calculated from the SVG viewBox (220x220):
+    // left 118/220=53.64%, top 74/220=33.64%, width 84/220=38.18%, height 58/220=26.36%
     return (
-      <div className="relative min-h-screen bg-slate-950 text-slate-100 overflow-hidden">
+      <div className="relative min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-slate-100 overflow-hidden">
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <div className="text-lg opacity-90 mb-3">Welcome, <span className="font-semibold">{name}</span></div>
 
-          {/* Desk scene */}
-          <div className="relative w-[18rem] h-[18rem]">
+          <div
+            className="relative"
+            style={{ width: "min(92vw, 92vh)", height: "min(92vw, 92vh)" }}
+          >
             <PlayerAvatar name={name} />
-            {/* clickable "monitor area" overlay to zoom */}
+            {/* Responsive monitor click zone (percent-based) */}
             <button
               onClick={() => setStage("computer")}
-              className="absolute left-[118px] top-[74px] w-[84px] h-[58px] rounded-md ring-2 ring-cyan-400/40 hover:ring-cyan-300/80 transition"
+              className="absolute rounded-md ring-2 ring-cyan-400/40 hover:ring-cyan-300/80 transition"
               title="Open computer"
+              style={{
+                left: "53.64%",
+                top: "33.64%",
+                width: "38.18%",
+                height: "26.36%",
+              }}
             />
           </div>
 
-          <div className="text-xs opacity-70 mt-2">Click the computer screen to use it</div>
+          <div className="text-xs opacity-70 mt-3">Click the in-game monitor to use it</div>
         </div>
+
+        {/* subtle vignette for drama */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_30%,rgba(0,0,0,0.4)_100%)]" />
         <style>{`
           @keyframes tap { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(12deg); } }
           @keyframes tap2 { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg); } }
