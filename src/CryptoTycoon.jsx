@@ -25,6 +25,12 @@ function hashToHue(str) {
   return Math.abs(h) % 360;
 }
 
+function formatClock(d = new Date()) {
+  const hours = d.getHours().toString().padStart(2, "0");
+  const mins = d.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${mins}`;
+}
+
 /* =========================
    Avatar (desk view)
 ========================= */
@@ -141,11 +147,8 @@ function CoinInfoModal({ coin, market, holdings, avgCost, onClose }) {
           <div className="text-lg font-semibold">
             {coin.name} <span className="opacity-70">({coin.symbol})</span>
           </div>
-          <button onClick={onClose} className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700">
-            Close
-          </button>
+        <button onClick={onClose} className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700">Close</button>
         </div>
-
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-slate-800/60 p-3">
             <div className="opacity-80 text-sm">Current Price</div>
@@ -167,18 +170,14 @@ function CoinInfoModal({ coin, market, holdings, avgCost, onClose }) {
           </div>
           <div className="rounded-xl bg-slate-800/60 p-3 col-span-2">
             <div className="opacity-80 text-sm">Current Value</div>
-            <div className="text-xl font-mono">
-              ${value.toFixed(2)}{" "}
+            <div className="text-xl font-mono">${value.toFixed(2)}{" "}
               <span className={`text-sm ${plPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                 {plPct >= 0 ? "▲" : "▼"} {plPct.toFixed(2)}%
               </span>
             </div>
           </div>
         </div>
-
-        <div className="mt-4 text-xs opacity-70">
-          Data is simulated for gameplay. (Using the in-memory price series to approximate a “24h” change.)
-        </div>
+        <div className="mt-4 text-xs opacity-70">Data is simulated for gameplay.</div>
       </div>
     </div>
   );
@@ -199,7 +198,6 @@ function MarketPanel({ coins, market, cash, onBuy, onSell, onOpenCoin }) {
 
   return (
     <>
-      <h2 className="text-lg font-semibold mb-2">Market</h2>
       <div className="space-y-3">
         {coins.map((c) => (
           <div key={c.symbol} className="rounded-xl p-3 bg-slate-800/60">
@@ -219,25 +217,9 @@ function MarketPanel({ coins, market, cash, onBuy, onSell, onOpenCoin }) {
                   placeholder="Qty"
                   className="w-24 px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-right"
                 />
-                <button
-                  onClick={() => setMax(c.symbol)}
-                  className="px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-600"
-                  title="Max you can afford"
-                >
-                  MAX
-                </button>
-                <button
-                  onClick={() => onBuy(c.symbol, Math.floor(Number(qtyRefs.current[c.symbol]?.value || 0)))}
-                  className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500"
-                >
-                  Buy
-                </button>
-                <button
-                  onClick={() => onSell(c.symbol, Math.floor(Number(qtyRefs.current[c.symbol]?.value || 0)))}
-                  className="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-500"
-                >
-                  Sell
-                </button>
+                <button onClick={() => setMax(c.symbol)} className="px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-600" title="Max you can afford">MAX</button>
+                <button onClick={() => onBuy(c.symbol, Math.floor(Number(qtyRefs.current[c.symbol]?.value || 0)))} className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500">Buy</button>
+                <button onClick={() => onSell(c.symbol, Math.floor(Number(qtyRefs.current[c.symbol]?.value || 0)))} className="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-500">Sell</button>
               </div>
             </div>
             <MiniChart data={market[c.symbol]?.series || []} />
@@ -254,45 +236,35 @@ function MarketPanel({ coins, market, cash, onBuy, onSell, onOpenCoin }) {
 function PortfolioPanel({ holdings, avgCost, market }) {
   const symbols = Object.keys(holdings);
   if (symbols.length === 0) {
-    return (
-      <>
-        <h2 className="text-lg font-semibold mb-2">Portfolio</h2>
-        <div className="text-sm opacity-80">No holdings yet. Buy something on the left!</div>
-      </>
-    );
+    return <div className="text-sm opacity-80">No holdings yet. Buy something on the Market app!</div>;
   }
   return (
-    <>
-      <h2 className="text-lg font-semibold mb-2">Portfolio</h2>
-      <div className="space-y-2">
-        {symbols.map((sym) => {
-          const units = Math.floor(holdings[sym] || 0);
-          const price = market[sym]?.price || 0;
-          const value = units * price;
-          const avg = avgCost[sym] ?? 0;
-          const plPct = avg > 0 ? ((price - avg) / avg) * 100 : 0;
-          const up = plPct >= 0;
+    <div className="space-y-2">
+      {symbols.map((sym) => {
+        const units = Math.floor(holdings[sym] || 0);
+        const price = market[sym]?.price || 0;
+        const value = units * price;
+        const avg = avgCost[sym] ?? 0;
+        const plPct = avg > 0 ? ((price - avg) / avg) * 100 : 0;
+        const up = plPct >= 0;
 
-          return (
-            <div key={sym} className="flex items-center justify-between bg-slate-800/60 rounded-xl p-3">
-              <div>
-                <div className="font-medium">{sym}</div>
-                <div className="text-xs opacity-70">
-                  {units} units · @ ${avg ? avg.toFixed(2) : "0.00"}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm opacity-80">@ ${price.toFixed(2)}</div>
-                <div className="font-mono">${value.toFixed(2)}</div>
-                <div className={`text-xs mt-1 inline-block px-2 py-0.5 rounded ${up ? "bg-emerald-900/40 text-emerald-300" : "bg-rose-900/40 text-rose-300"}`}>
-                  {up ? "▲" : "▼"} {plPct.toFixed(2)}%
-                </div>
+        return (
+          <div key={sym} className="flex items-center justify-between bg-slate-800/60 rounded-xl p-3">
+            <div>
+              <div className="font-medium">{sym}</div>
+              <div className="text-xs opacity-70">{units} units · @ ${avg ? avg.toFixed(2) : "0.00"}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm opacity-80">@ ${price.toFixed(2)}</div>
+              <div className="font-mono">${value.toFixed(2)}</div>
+              <div className={`text-xs mt-1 inline-block px-2 py-0.5 rounded ${up ? "bg-emerald-900/40 text-emerald-300" : "bg-rose-900/40 text-rose-300"}`}>
+                {up ? "▲" : "▼"} {plPct.toFixed(2)}%
               </div>
             </div>
-          );
-        })}
-      </div>
-    </>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -315,8 +287,10 @@ const TICK_MS = 900;
 export default function CryptoTycoon() {
   // stages: start → desk → computer
   const [stage, setStage] = useState("start");
-  const [tab, setTab] = useState("market"); // 'market' | 'portfolio'
+  const [tab, setTab] = useState(null); // null shows desktop; 'market' or 'portfolio' opens window
   const [name, setName] = useState("");
+  const [clock, setClock] = useState(formatClock());
+  const [zooming, setZooming] = useState(false);
 
   const tick = useClockTick(TICK_MS);
 
@@ -339,6 +313,13 @@ export default function CryptoTycoon() {
 
   const [selectedCoin, setSelectedCoin] = useState(null);
 
+  // fake OS clock updates when on computer
+  useEffect(() => {
+    if (stage !== "computer") return;
+    const id = setInterval(() => setClock(formatClock()), 1000);
+    return () => clearInterval(id);
+  }, [stage]);
+
   // advance market when on computer (active play)
   useEffect(() => {
     if (stage !== "computer") return;
@@ -354,7 +335,7 @@ export default function CryptoTycoon() {
     });
   }, [tick, stage]);
 
-  // net worth
+  // net worth & history
   const netWorth = useMemo(() => {
     const holdingsValue = Object.entries(player.holdings).reduce((sum, [sym, units]) => {
       const px = market[sym]?.price || 0;
@@ -363,7 +344,6 @@ export default function CryptoTycoon() {
     return parseFloat((player.cash + holdingsValue).toFixed(2));
   }, [player.cash, player.holdings, market]);
 
-  // history
   useEffect(() => {
     if (stage !== "computer") return;
     setPlayer((p) => ({
@@ -445,8 +425,17 @@ export default function CryptoTycoon() {
     });
     setSelectedCoin(null);
     setStage("start");
-    setTab("market");
+    setTab(null);
     setName("");
+  }
+
+  function goToComputer() {
+    // smooth zoom animation: scale + fade + blur
+    setZooming(true);
+    setTimeout(() => {
+      setStage("computer");
+      setZooming(false);
+    }, 450); // match CSS duration
   }
 
   /* ===== STAGES ===== */
@@ -477,37 +466,27 @@ export default function CryptoTycoon() {
   }
 
   if (stage === "desk") {
-    // Make the avatar fill most of the browser: square container sized by the smaller viewport side
-    // Percentage overlay for the monitor click zone is calculated from the SVG viewBox (220x220):
-    // left 118/220=53.64%, top 74/220=33.64%, width 84/220=38.18%, height 58/220=26.36%
+    // Big desk scene that fills the browser. Click the monitor area to zoom.
     return (
       <div className="relative min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-slate-100 overflow-hidden">
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div className={`absolute inset-0 flex flex-col items-center justify-center transition-[transform,filter,opacity] duration-500 ease-out ${zooming ? "scale-[1.2] blur-[2px] opacity-80" : "scale-100"}`}>
           <div className="text-lg opacity-90 mb-3">Welcome, <span className="font-semibold">{name}</span></div>
 
-          <div
-            className="relative"
-            style={{ width: "min(92vw, 92vh)", height: "min(92vw, 92vh)" }}
-          >
+          <div className="relative" style={{ width: "min(92vw, 92vh)", height: "min(92vw, 92vh)" }}>
             <PlayerAvatar name={name} />
-            {/* Responsive monitor click zone (percent-based) */}
+            {/* Click zone over the main monitor (percent from 220x220 viewBox) */}
             <button
-              onClick={() => setStage("computer")}
+              onClick={goToComputer}
               className="absolute rounded-md ring-2 ring-cyan-400/40 hover:ring-cyan-300/80 transition"
               title="Open computer"
-              style={{
-                left: "53.64%",
-                top: "33.64%",
-                width: "38.18%",
-                height: "26.36%",
-              }}
+              style={{ left: "53.64%", top: "33.64%", width: "38.18%", height: "26.36%" }}
             />
           </div>
 
           <div className="text-xs opacity-70 mt-3">Click the in-game monitor to use it</div>
         </div>
 
-        {/* subtle vignette for drama */}
+        {/* vignette */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_30%,rgba(0,0,0,0.4)_100%)]" />
         <style>{`
           @keyframes tap { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(12deg); } }
@@ -519,7 +498,7 @@ export default function CryptoTycoon() {
     );
   }
 
-  // COMPUTER: zoomed-in monitor with tabs
+  // COMPUTER: realistic OS-like UI inside a monitor, with desktop + app windows
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-6">
       <header className="flex items-center justify-between">
@@ -538,27 +517,49 @@ export default function CryptoTycoon() {
           {/* Faux bezel */}
           <div className="h-3 bg-slate-800/80" />
           {/* Screen area */}
-          <div className="p-3 md:p-4">
-            {/* Tabs */}
-            <div className="flex gap-2 mb-3">
-              <button
-                onClick={() => setTab("market")}
-                className={`px-3 py-1.5 rounded-lg ${tab === "market" ? "bg-cyan-600" : "bg-slate-800 hover:bg-slate-700"}`}
-              >
-                Market
-              </button>
-              <button
-                onClick={() => setTab("portfolio")}
-                className={`px-3 py-1.5 rounded-lg ${tab === "portfolio" ? "bg-cyan-600" : "bg-slate-800 hover:bg-slate-700"}`}
-              >
-                Portfolio
-              </button>
+          <div className="p-0 md:p-0 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22><rect width=%2240%22 height=%2240%22 fill=%22%230b1220%22/><path d=%22M0 20h40M20 0v40%22 stroke=%22%2313243c%22 stroke-opacity=%220.4%22/></svg>')] bg-repeat">
+            {/* Top status bar */}
+            <div className="flex items-center justify-between px-3 py-2 bg-slate-800/80 border-b border-slate-700">
+              <div className="flex items-center gap-2 text-xs">
+                {/* Fake app menu */}
+                <div className="px-2 py-1 rounded bg-slate-700/60">☰</div>
+                <div className="opacity-80">TRADER OS</div>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                {/* Wi-Fi icon */}
+                <svg width="18" height="18" viewBox="0 0 24 24" className="opacity-80"><path fill="currentColor" d="M12 18.5q-.425 0-.712-.288T11 17.5q0-.425.288-.712T12 16.5q.425 0 .713.288T13 17.5q0 .425-.288.712T12 18.5Zm-3-3q-.425 0-.713-.288T8 14.5q0-.425.288-.712T9 13.5q1.25 0 2.375.45T13.5 15q.3.3.3.725t-.3.725q-.3.3-.725.3t-.725-.3q-.7-.575-1.55-.913T9 15.5Zm-3-3q-.425 0-.712-.288T5 11.5q0-.425.288-.712T6 10.5q2.45 0 4.6.938T14.5 14q.3.3.3.725t-.3.725q-.3.3-.725.3t-.725-.3q-1.65-1.35-3.55-2.15T6 12.5Zm-3-3q-.425 0-.713-.288T2 8.5q0-.425.288-.712T3 7.5q3.65 0 6.85 1.388T17.5 13q.3.3.3.725t-.3.725q-.3.3-.725.3t-.725-.3q-2.6-2.1-5.675-3.175T3 9.5Z"/></svg>
+                {/* Battery */}
+                <div className="flex items-center gap-1 opacity-80">
+                  <div className="w-8 h-3 rounded-sm border border-slate-400 relative">
+                    <div className="h-full bg-emerald-500" style={{ width: "78%" }} />
+                    <div className="absolute -right-1 top-1 h-1 w-1.5 bg-slate-400 rounded-sm" />
+                  </div>
+                  <span>78%</span>
+                </div>
+                {/* Time */}
+                <div className="font-mono opacity-90">{clock}</div>
+              </div>
             </div>
 
-            {/* Content */}
-            {tab === "market" ? (
-              <div className="grid md:grid-cols-2 gap-4">
-                <section className="bg-slate-900/50 rounded-2xl p-3 shadow-lg">
+            {/* Desktop area */}
+            <div className="relative p-4 min-h-[420px]">
+              {/* Desktop icons */}
+              {!tab && (
+                <div className="grid grid-cols-6 gap-4">
+                  <button onClick={() => setTab("market")} className="flex flex-col items-center text-xs opacity-90 hover:opacity-100">
+                    <div className="w-14 h-14 rounded-xl bg-cyan-600/80 grid place-items-center text-2xl shadow">🪙</div>
+                    <div className="mt-1">Market</div>
+                  </button>
+                  <button onClick={() => setTab("portfolio")} className="flex flex-col items-center text-xs opacity-90 hover:opacity-100">
+                    <div className="w-14 h-14 rounded-xl bg-emerald-600/80 grid place-items-center text-2xl shadow">📁</div>
+                    <div className="mt-1">Portfolio</div>
+                  </button>
+                </div>
+              )}
+
+              {/* App windows */}
+              {tab === "market" && (
+                <Window title="Market" onClose={() => setTab(null)}>
                   <MarketPanel
                     coins={COINS}
                     market={market}
@@ -567,11 +568,7 @@ export default function CryptoTycoon() {
                     onSell={sell}
                     onOpenCoin={setSelectedCoin}
                   />
-                </section>
-
-                <section className="bg-slate-900/50 rounded-2xl p-3 shadow-lg">
-                  <div className="text-lg font-semibold mb-2">Overview</div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-sm mt-4">
                     <div className="rounded-xl bg-slate-800/60 p-3">
                       <div className="opacity-80">Cash</div>
                       <div className="text-xl font-mono">${player.cash.toFixed(2)}</div>
@@ -581,6 +578,12 @@ export default function CryptoTycoon() {
                       <div className="text-xl font-mono">${netWorth.toFixed(2)}</div>
                     </div>
                   </div>
+                </Window>
+              )}
+
+              {tab === "portfolio" && (
+                <Window title="Portfolio" onClose={() => setTab(null)}>
+                  <PortfolioPanel holdings={player.holdings} avgCost={player.avgCost} market={market} />
                   <div className="mt-4">
                     <div className="text-sm opacity-80 mb-2">Net Worth (live)</div>
                     <div className="h-40 w-full">
@@ -595,13 +598,16 @@ export default function CryptoTycoon() {
                       </ResponsiveContainer>
                     </div>
                   </div>
-                </section>
-              </div>
-            ) : (
-              <section className="bg-slate-900/50 rounded-2xl p-3 shadow-lg">
-                <PortfolioPanel holdings={player.holdings} avgCost={player.avgCost} market={market} />
-              </section>
-            )}
+                </Window>
+              )}
+            </div>
+
+            {/* Bottom dock */}
+            <div className="px-3 py-2 bg-slate-800/80 border-t border-slate-700 flex items-center gap-3">
+              <button onClick={() => setTab("market")} className={`px-3 py-1.5 rounded ${tab === "market" ? "bg-cyan-600" : "bg-slate-700/70 hover:bg-slate-700"}`}>🪙 Market</button>
+              <button onClick={() => setTab("portfolio")} className={`px-3 py-1.5 rounded ${tab === "portfolio" ? "bg-cyan-600" : "bg-slate-700/70 hover:bg-slate-700"}`}>📁 Portfolio</button>
+              <div className="ml-auto text-xs opacity-70">TRADER OS</div>
+            </div>
           </div>
         </div>
 
@@ -609,7 +615,7 @@ export default function CryptoTycoon() {
         <div className="mx-auto h-4 w-40 bg-slate-800/70 rounded-b-3xl mt-2" />
       </div>
 
-      {/* Modal */}
+      {/* Modal for coin details */}
       {selectedCoin && (
         <CoinInfoModal
           coin={selectedCoin}
@@ -619,6 +625,26 @@ export default function CryptoTycoon() {
           onClose={() => setSelectedCoin(null)}
         />
       )}
+    </div>
+  );
+}
+
+/* =========================
+   Window component (inside OS screen)
+========================= */
+function Window({ title, children, onClose }) {
+  return (
+    <div className="bg-slate-900/70 border border-slate-700 rounded-xl shadow-xl overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-800/80 border-b border-slate-700">
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-rose-500" />
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500" />
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" />
+          <div className="ml-2 text-sm font-medium">{title}</div>
+        </div>
+        <button onClick={onClose} className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs">Close</button>
+      </div>
+      <div className="p-3">{children}</div>
     </div>
   );
 }
