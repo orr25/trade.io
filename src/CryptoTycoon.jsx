@@ -32,73 +32,140 @@ function formatClock(d = new Date()) {
 }
 
 /* =========================
-   Avatar (desk view)
+   Cyberpunk Desk Scene (widescreen)
+   - character viewed from behind
+   - neon skyline, rain, scanlines
 ========================= */
-function PlayerAvatar({ name = "Guest" }) {
+function CyberpunkDesk({ name = "Guest" }) {
   const hue = hashToHue(name || "Guest");
-  const shirt = `hsl(${(hue + 210) % 360} 70% 55%)`;
-  const chair = `hsl(${(hue + 30) % 360} 15% 35%)`;
-  const hair = `hsl(${(hue + 300) % 360} 25% 20%)`;
+  const jacket = `hsl(${(hue + 290) % 360} 90% 55%)`; // neon magenta jacket
+  const hair = `hsl(${(hue + 210) % 360} 30% 15%)`;
 
   return (
-    <svg viewBox="0 0 220 220" className="w-full h-full drop-shadow-[0_12px_32px_rgba(0,0,0,0.6)]">
+    <svg viewBox="0 0 800 450" className="w-full h-full select-none">
       <defs>
-        <radialGradient id="glow" cx="60%" cy="42%" r="60%">
-          <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0" />
-        </radialGradient>
-        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="4" stdDeviation="4" floodOpacity="0.35" />
+        {/* Gradients */}
+        <linearGradient id="bgGrad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="#0b0f1c" />
+          <stop offset="60%" stopColor="#0b1120" />
+          <stop offset="100%" stopColor="#070b14" />
+        </linearGradient>
+        <linearGradient id="neon" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" stopColor="#22d3ee" />
+          <stop offset="100%" stopColor="#a855f7" />
+        </linearGradient>
+        <linearGradient id="signGlow" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.1" />
+        </linearGradient>
+
+        {/* Rain pattern */}
+        <pattern id="rain" width="6" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(12)">
+          <line x1="0" y1="0" x2="0" y2="12" stroke="#6ee7faff" strokeOpacity="0.14" strokeWidth="1" />
+        </pattern>
+
+        {/* Scanlines */}
+        <pattern id="scan" width="2" height="4" patternUnits="userSpaceOnUse">
+          <rect width="2" height="2" fill="rgba(0,0,0,0.22)" />
+          <rect y="2" width="2" height="2" fill="rgba(0,0,0,0)" />
+        </pattern>
+
+        {/* Soft shadow */}
+        <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="8" stdDeviation="12" floodColor="#000" floodOpacity="0.6" />
+        </filter>
+
+        {/* Neon outer glow for the sign */}
+        <filter id="neonGlow" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="6" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
         </filter>
       </defs>
 
-      {/* background glow + desk edge */}
-      <rect x="0" y="0" width="220" height="220" fill="url(#glow)" />
-      <rect x="0" y="170" width="220" height="18" fill="#cbd5e1" />
+      {/* Sky + distant city */}
+      <rect x="0" y="0" width="800" height="450" fill="url(#bgGrad)" />
+      <rect x="0" y="0" width="800" height="450" fill="url(#rain)" opacity="0.25" />
 
-      {/* dual screens */}
-      <g filter="url(#shadow)">
-        {/* Main monitor */}
-        <rect x="120" y="76" width="78" height="52" rx="7" fill="#1f2937" />
-        <rect x="125" y="81" width="68" height="42" rx="5" className="fill-slate-900" />
-        {/* --- label on main monitor --- */}
-        <text x="159" y="107" textAnchor="middle" fontFamily="ui-sans-serif, system-ui" fontSize="8" fill="#38bdf8" opacity="0.9" letterSpacing="1.5">
+      {/* City blocks */}
+      <g opacity="0.35">
+        <rect x="40" y="200" width="80" height="160" fill="#0ea5e9" opacity="0.25" />
+        <rect x="140" y="230" width="60" height="130" fill="#a855f7" opacity="0.25" />
+        <rect x="220" y="210" width="110" height="150" fill="#22d3ee" opacity="0.22" />
+        <rect x="360" y="220" width="90" height="140" fill="#a78bfa" opacity="0.22" />
+        <rect x="470" y="205" width="130" height="155" fill="#06b6d4" opacity="0.2" />
+        <rect x="620" y="235" width="70" height="125" fill="#22d3ee" opacity="0.22" />
+        <rect x="710" y="215" width="50" height="145" fill="#a855f7" opacity="0.22" />
+      </g>
+
+      {/* Neon sign TRADER.IO */}
+      <g transform="translate(560,60)" filter="url(#neonGlow)">
+        <rect x="-10" y="-22" width="220" height="54" rx="10" fill="url(#signGlow)" opacity="0.35" />
+        <text
+          x="100"
+          y="16"
+          textAnchor="middle"
+          fontFamily="ui-sans-serif, system-ui"
+          fontSize="28"
+          fill="url(#neon)"
+          letterSpacing="2"
+        >
+          TRADER.IO
+        </text>
+      </g>
+
+      {/* Window reflections */}
+      <g opacity="0.14">
+        <rect x="0" y="0" width="800" height="450" fill="url(#scan)" />
+      </g>
+
+      {/* Desk top */}
+      <rect x="0" y="330" width="800" height="50" fill="#0b1324" />
+      <rect x="0" y="330" width="800" height="50" fill="url(#neon)" opacity="0.06" />
+
+      {/* Monitors + glow */}
+      <g filter="url(#softShadow)">
+        {/* main monitor */}
+        <rect x="330" y="120" width="260" height="150" rx="10" fill="#060a12" stroke="#172038" />
+        <rect x="340" y="130" width="240" height="130" rx="8" fill="#0b1424" />
+        <rect x="340" y="130" width="240" height="130" rx="8" fill="url(#scan)" opacity="0.3" />
+        {/* glow rim */}
+        <rect x="340" y="130" width="240" height="130" rx="8" fill="none" stroke="url(#neon)" strokeWidth="2" opacity="0.7">
+          <animate attributeName="opacity" values="0.35;0.7;0.35" dur="3.5s" repeatCount="indefinite" />
+        </rect>
+        {/* screen brand text */}
+        <text x="460" y="200" textAnchor="middle" fontFamily="ui-sans-serif, system-ui" fontSize="18" fill="#67e8f9" opacity="0.85">
           TRADER.IO
         </text>
 
-        {/* Side screen */}
-        <rect x="38" y="84" width="70" height="44" rx="6" fill="#111827" />
-        <rect x="42" y="88" width="62" height="36" rx="4" className="fill-slate-900" />
+        {/* side monitor */}
+        <rect x="200" y="140" width="110" height="90" rx="8" fill="#060a12" stroke="#172038" />
+        <rect x="206" y="146" width="98" height="78" rx="6" fill="#101a2e" />
+        <rect x="206" y="146" width="98" height="78" rx="6" fill="url(#scan)" opacity="0.3" />
+        <rect x="206" y="146" width="98" height="78" rx="6" fill="none" stroke="#22d3ee" opacity="0.4" />
       </g>
 
+      {/* Keyboard + desk items */}
+      <rect x="350" y="290" width="220" height="16" rx="6" fill="#334155" opacity="0.9" />
+      <rect x="585" y="282" width="26" height="18" rx="4" fill="#94a3b8" />
+      <circle cx="612" cy="276" r="3" fill="#94a3b8" />
+
+      {/* Character (from behind) */}
       {/* chair back */}
-      <rect x="25" y="112" width="18" height="48" rx="4" fill={chair} />
+      <rect x="300" y="242" width="200" height="96" rx="18" fill="#0f172a" />
+      {/* shoulders / jacket */}
+      <path d="M360 260 q40 -40 80 0 v60 h-160 v-40 q40 -20 80 -20 z" fill={jacket} opacity="0.95" />
+      {/* head */}
+      <circle cx="400" cy="240" r="28" fill={hair} />
+      {/* neck glow */}
+      <rect x="392" y="252" width="16" height="8" rx="3" fill="#22d3ee" opacity="0.5" />
+      {/* subtle rimlight */}
+      <path d="M376 220 q24 -18 48 0" stroke="#22d3ee" strokeOpacity="0.6" strokeWidth="2" fill="none" />
 
-      {/* head + hair */}
-      <path d="M66 56 q18 -18 36 0 v10 h-36 z" fill={hair} />
-      <circle cx="84" cy="68" r="20" fill="#fcd34d" />
-      <g>
-        <rect x="74" y="66" width="6" height="2" className="fill-slate-900 animate-[blink_4s_infinite]" />
-        <rect x="92" y="66" width="6" height="2" className="fill-slate-900 animate-[blink_4s_infinite_0.2s]" />
-      </g>
-      <path d="M78 77 q6 5 12 0" stroke="#7c2d12" strokeWidth="2" fill="none" />
-
-      {/* torso + arms */}
-      <rect x="64" y="88" width="40" height="46" rx="10" fill={shirt} />
-      <g className="origin-[84px_122px] animate-[tap_0.6s_ease-in-out_infinite]">
-        <rect x="56" y="112" width="28" height="10" rx="5" fill="#fcd34d" />
-      </g>
-      <g className="origin-[98px_122px] animate-[tap2_0.6s_ease-in-out_infinite]">
-        <rect x="84" y="112" width="28" height="10" rx="5" fill="#fcd34d" />
-      </g>
-
-      {/* keyboard + coffee */}
-      <rect x="102" y="156" width="60" height="10" rx="4" fill="#94a3b8" />
-      <g>
-        <rect x="168" y="156" width="14" height="10" rx="2" fill="#e5e7eb" />
-        <rect x="180" y="158" width="4" height="6" rx="1" fill="#e5e7eb" />
-        <path d="M172 152 q2 -6 6 0" stroke="#e5e7eb" strokeWidth="1.5" fill="none" className="animate-[steam_2.5s_ease-in-out_infinite]" />
-      </g>
+      {/* subtle foreground vignette */}
+      <rect x="0" y="0" width="800" height="450" fill="url(#scan)" opacity="0.12" />
     </svg>
   );
 }
@@ -147,7 +214,7 @@ function CoinInfoModal({ coin, market, holdings, avgCost, onClose }) {
           <div className="text-lg font-semibold">
             {coin.name} <span className="opacity-70">({coin.symbol})</span>
           </div>
-        <button onClick={onClose} className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700">Close</button>
+          <button onClick={onClose} className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700">Close</button>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-slate-800/60 p-3">
@@ -170,7 +237,8 @@ function CoinInfoModal({ coin, market, holdings, avgCost, onClose }) {
           </div>
           <div className="rounded-xl bg-slate-800/60 p-3 col-span-2">
             <div className="opacity-80 text-sm">Current Value</div>
-            <div className="text-xl font-mono">${value.toFixed(2)}{" "}
+            <div className="text-xl font-mono">
+              ${value.toFixed(2)}{" "}
               <span className={`text-sm ${plPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                 {plPct >= 0 ? "▲" : "▼"} {plPct.toFixed(2)}%
               </span>
@@ -430,12 +498,11 @@ export default function CryptoTycoon() {
   }
 
   function goToComputer() {
-    // smooth zoom animation: scale + fade + blur
     setZooming(true);
     setTimeout(() => {
       setStage("computer");
       setZooming(false);
-    }, 450); // match CSS duration
+    }, 450);
   }
 
   /* ===== STAGES ===== */
@@ -466,39 +533,33 @@ export default function CryptoTycoon() {
   }
 
   if (stage === "desk") {
-    // Big desk scene that fills the browser. Click the monitor area to zoom.
     return (
-      <div className="relative min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-slate-100 overflow-hidden">
-        <div className={`absolute inset-0 flex flex-col items-center justify-center transition-[transform,filter,opacity] duration-500 ease-out ${zooming ? "scale-[1.2] blur-[2px] opacity-80" : "scale-100"}`}>
-          <div className="text-lg opacity-90 mb-3">Welcome, <span className="font-semibold">{name}</span></div>
-
-          <div className="relative" style={{ width: "min(92vw, 92vh)", height: "min(92vw, 92vh)" }}>
-            <PlayerAvatar name={name} />
-            {/* Click zone over the main monitor (percent from 220x220 viewBox) */}
+      <div className="relative min-h-screen bg-gradient-to-b from-[#070B14] to-[#050811] text-slate-100 overflow-hidden">
+        <div className={`absolute inset-0 flex items-center justify-center transition-[transform,filter,opacity] duration-500 ease-out ${zooming ? "scale-[1.08] blur-[1px] opacity-85" : "scale-100"}`}>
+          {/* Responsive canvas */}
+          <div className="relative w-full max-w-[1200px] aspect-[16/9]">
+            <CyberpunkDesk name={name} />
+            {/* monitor click zone (based on 800x450 viewBox): x=330 y=120 w=260 h=150 */}
             <button
               onClick={goToComputer}
               className="absolute rounded-md ring-2 ring-cyan-400/40 hover:ring-cyan-300/80 transition"
               title="Open computer"
-              style={{ left: "53.64%", top: "33.64%", width: "38.18%", height: "26.36%" }}
+              style={{
+                left: "41.25%",
+                top: "26.666%",
+                width: "32.5%",
+                height: "33.333%",
+              }}
             />
           </div>
-
-          <div className="text-xs opacity-70 mt-3">Click the in-game monitor to use it</div>
         </div>
-
-        {/* vignette */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_30%,rgba(0,0,0,0.4)_100%)]" />
-        <style>{`
-          @keyframes tap { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(12deg); } }
-          @keyframes tap2 { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg); } }
-          @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 94%, 98% { transform: scaleY(0.1); } }
-          @keyframes steam { 0% { opacity: .3; transform: translateY(0); } 50% { opacity: .8; } 100% { opacity: 0; transform: translateY(-10px); } }
-        `}</style>
+        {/* neon vignette */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.06)_0%,rgba(168,85,247,0.04)_35%,rgba(0,0,0,0.5)_100%)]" />
       </div>
     );
   }
 
-  // COMPUTER: realistic OS-like UI inside a monitor, with desktop + app windows
+  // COMPUTER: OS-like UI inside monitor
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-6">
       <header className="flex items-center justify-between">
@@ -521,14 +582,11 @@ export default function CryptoTycoon() {
             {/* Top status bar */}
             <div className="flex items-center justify-between px-3 py-2 bg-slate-800/80 border-b border-slate-700">
               <div className="flex items-center gap-2 text-xs">
-                {/* Fake app menu */}
                 <div className="px-2 py-1 rounded bg-slate-700/60">☰</div>
                 <div className="opacity-80">TRADER OS</div>
               </div>
               <div className="flex items-center gap-3 text-xs">
-                {/* Wi-Fi icon */}
                 <svg width="18" height="18" viewBox="0 0 24 24" className="opacity-80"><path fill="currentColor" d="M12 18.5q-.425 0-.712-.288T11 17.5q0-.425.288-.712T12 16.5q.425 0 .713.288T13 17.5q0 .425-.288.712T12 18.5Zm-3-3q-.425 0-.713-.288T8 14.5q0-.425.288-.712T9 13.5q1.25 0 2.375.45T13.5 15q.3.3.3.725t-.3.725q-.3.3-.725.3t-.725-.3q-.7-.575-1.55-.913T9 15.5Zm-3-3q-.425 0-.712-.288T5 11.5q0-.425.288-.712T6 10.5q2.45 0 4.6.938T14.5 14q.3.3.3.725t-.3.725q-.3.3-.725.3t-.725-.3q-1.65-1.35-3.55-2.15T6 12.5Zm-3-3q-.425 0-.713-.288T2 8.5q0-.425.288-.712T3 7.5q3.65 0 6.85 1.388T17.5 13q.3.3.3.725t-.3.725q-.3.3-.725.3t-.725-.3q-2.6-2.1-5.675-3.175T3 9.5Z"/></svg>
-                {/* Battery */}
                 <div className="flex items-center gap-1 opacity-80">
                   <div className="w-8 h-3 rounded-sm border border-slate-400 relative">
                     <div className="h-full bg-emerald-500" style={{ width: "78%" }} />
@@ -536,7 +594,6 @@ export default function CryptoTycoon() {
                   </div>
                   <span>78%</span>
                 </div>
-                {/* Time */}
                 <div className="font-mono opacity-90">{clock}</div>
               </div>
             </div>
