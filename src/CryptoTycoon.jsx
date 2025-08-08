@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import PlayerAvatar from "./components/PlayerAvatar.jsx";
 import MarketPanel from "./components/MarketPanel.jsx";
 import PortfolioPanel from "./components/PortfolioPanel.jsx";
+import CoinInfoModal from "./components/CoinInfoModal.jsx";
 
 // ===== Game Config =====
 const COINS = [
@@ -41,8 +42,9 @@ export default function CryptoTycoon() {
   const [player, setPlayer] = useState({
     id: Math.random().toString(36).slice(2, 9),
     cash: STARTING_CASH,
-    holdings: {}, // {SYM: units}
-    history: [],  // [{t, value}]
+    holdings: {},   // {SYM: integer units}
+    avgCost: {},    // {SYM: average cost per unit}
+    history: [],    // [{t, value}]
   });
 
   const [market, setMarket] = useState(() => {
@@ -53,6 +55,8 @@ export default function CryptoTycoon() {
     }
     return m;
   });
+
+  const [selectedCoin, setSelectedCoin] = useState(null);
 
   // Advance market only while on market screen
   useEffect(() => {
@@ -83,44 +87,64 @@ export default function CryptoTycoon() {
     if (screen !== "market") return;
     setPlayer((p) => ({
       ...p,
-      history: [...p.history.slice(-300), { t: Date.now(), value: netWorth }]
+      history: [...p.history.slice(-300), { t: Date.now(), value: netWorth }],
     }));
   }, [netWorth, screen]);
 
-  // Trading handlers
+  // ===== Trading handlers (integers + average cost) =====
   function buy(sym, qty) {
-    const q = parseFloat(qty);
-    if (!q || q <= 0) return;
+    const q = Math.max(0, Math.floor(Number(qty)));
+    if (!q) return;
     const price = market[sym]?.price || 0;
     const cost = q * price;
+
     setPlayer((p) => {
       if (p.cash < cost) return p;
-      const units = (p.holdings[sym] || 0) + q;
+
+      const prevUnits = Math.floor(p.holdings[sym] || 0);
+      const prevAvg = p.avgCost[sym] ?? 0;
+
+      const newUnits = prevUnits + q;
+      const newAvg = prevUnits > 0 ? (prevAvg * prevUnits + price * q) / newUnits : price;
+
       return {
         ...p,
         cash: parseFloat((p.cash - cost).toFixed(2)),
-        holdings: { ...p.holdings, [sym]: parseFloat(units.toFixed(6)) }
+        holdings: { ...p.holdings, [sym]: newUnits },
+        avgCost: { ...p.avgCost, [sym]: parseFloat(newAvg.toFixed(2)) },
       };
     });
   }
 
   function sell(sym, qty) {
-    const q = parseFloat(qty);
-    if (!q || q <= 0) return;
+    const q = Math.max(0, Math.floor(Number(qty)));
+    if (!q) return;
+
     setPlayer((p) => {
-      const owned = p.holdings[sym] || 0;
+      const owned = Math.floor(p.holdings[sym] || 0);
       const sellQty = Math.min(owned, q);
       if (sellQty <= 0) return p;
+
       const price = market[sym]?.price || 0;
       const proceeds = sellQty * price;
-      const newUnits = parseFloat((owned - sellQty).toFixed(6));
+
+      const newUnits = owned - sellQty;
       const newHoldings = { ...p.holdings };
-      if (newUnits <= 0) delete newHoldings[sym];
-      else newHoldings[sym] = newUnits;
+      const newAvgCost = { ...p.avgCost };
+
+      if (newUnits <= 0) {
+        delete newHoldings[sym];
+        delete newAvgCost[sym]; // reset avg cost when you fully exit
+      } else {
+        newHoldings[sym] = newUnits;
+        // avg cost stays the same on sell (unless fully exited)
+      }
+
       return {
         ...p,
         cash: parseFloat((p.cash + proceeds).toFixed(2)),
-        holdings: newHoldings
+        holdings: newHoldings,
+        avgCost: newAvgCost,
       };
     });
   }
@@ -130,9 +154,10 @@ export default function CryptoTycoon() {
       id: Math.random().toString(36).slice(2, 9),
       cash: STARTING_CASH,
       holdings: {},
-      history: []
+      avgCost: {},
+      history: [],
     });
-    setMarket((prev) => {
+    setMarket(() => {
       const m = {};
       for (const c of COINS) {
         const start = parseFloat((100 + Math.random() * 1000).toFixed(2));
@@ -140,6 +165,7 @@ export default function CryptoTycoon() {
       }
       return m;
     });
+    setSelectedCoin(null);
     setScreen("start");
     setName("");
   }
@@ -208,8 +234,10 @@ export default function CryptoTycoon() {
           <MarketPanel
             coins={COINS}
             market={market}
+            cash={player.cash}
             onBuy={buy}
             onSell={sell}
+            onOpenCoin={setSelectedCoin}
           />
         </section>
 
@@ -231,7 +259,11 @@ export default function CryptoTycoon() {
 
         {/* Portfolio + Net Worth chart */}
         <section className="md:col-span-1 bg-slate-900/50 rounded-2xl p-3 shadow-lg">
-          <PortfolioPanel holdings={player.holdings} market={market} />
+          <PortfolioPanel
+            holdings={player.holdings}
+            avgCost={player.avgCost}
+            market={market}
+          />
           <div className="mt-4">
             <h3 className="text-md font-semibold mb-2">Net Worth</h3>
             <div className="h-32 w-full">
@@ -249,6 +281,17 @@ export default function CryptoTycoon() {
           <div className="mt-4 text-xs opacity-70">Prices are simulated. Prototype for gameplay only.</div>
         </section>
       </main>
+
+      {/* Coin details modal */}
+      {selectedCoin && (
+        <CoinInfoModal
+          coin={selectedCoin}
+          market={market}
+          holdings={player.holdings}
+          avgCost={player.avgCost}
+          onClose={() => setSelectedCoin(null)}
+        />
+      )}
     </div>
   );
 }
